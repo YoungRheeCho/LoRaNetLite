@@ -10,6 +10,7 @@ void GeneralIdleState::onEnter(Node& node) {
 }
 
 void GeneralIdleState::onExit(Node& node){
+    LoRa.receive();
 }
 
 void GeneralIdleState::run(Node& node) {
@@ -25,26 +26,30 @@ void GeneralIdleState::run(Node& node) {
     }
 
     int packetSize = LoRa.parsePacket();
-    if (!packetSize) {
+    if (packetSize < 2) {
+        if (packetSize) {
+            while (LoRa.available()) LoRa.read();
+        }
         return;
     }
 
-    String incoming;
-    char ackMsg[16];
-
-    while (LoRa.available()) {
-        incoming += (char)LoRa.read();
+    uint8_t type = LoRa.read();
+    if (type != MSG_ID_ASSIGN) {
+        while (LoRa.available()) LoRa.read();
+        return;
     }
-
-    node.setNodeId(incoming.toInt());
-    snprintf(ackMsg, sizeof(ackMsg), "ACK:%d", node.getNodeId());
+    
+    uint8_t recvId = LoRa.read();
+    node.setNodeId(recvId);
+    //snprintf(ackMsg, sizeof(ackMsg), "ACK:%d", node.getNodeId());
 
     Serial.print("[SLAVE] Sending ACK message: ");
-    Serial.println(ackMsg);
+    Serial.println(recvId);
 
     LoRa.beginPacket();
-    LoRa.print(ackMsg);
+    LoRa.write(MSG_ASSIGN_ACK);
+    LoRa.write(recvId);
     LoRa.endPacket();
-    LoRa.receive();
+    
     node.onIdAssigned();
 }

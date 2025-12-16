@@ -1,7 +1,8 @@
 #include "Node.h"
 #include "states/GeneralIdleState.h"
 #include "states/MasterIdleState.h"
-#include "states/JoinState.h"
+#include "states/JoinedState.h"
+#include "states/SlotAssignState.h"
 #include <Arduino.h>
 
 Node::Node()
@@ -26,10 +27,13 @@ void Node::onIdleTimeout(){
     changeState(MasterIdleState::instance());
 }
 
-void Node::onIdAssigned(){ //얘 state 바꿔야 함.
-    changeState(JoinState::instance());
+void Node::onIdAssigned(){
+    changeState(JoinedState::instance());
 }
 
+void Node::onRecvFin(){
+    changeState(SlotAssignState::instance());
+}
 
 bool Node::hasNodeId(){
     return getNodeId() != 0;

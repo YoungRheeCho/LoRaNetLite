@@ -4,7 +4,13 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
 #include "NodeState.h"
+
 #define MAX_NODE_CNT 3
+#define MSG_ID_ASSIGN 0x01
+#define MSG_ASSIGN_ACK 0X02
+#define MSG_FIN 0X03
+#define MSG_CONTROL 0X04
+#define MSG_DATA 0X05
 
 enum class Role : uint8_t {
     MASTER = 0,
@@ -21,6 +27,8 @@ public:
 
     void onIdleTimeout();
     void onIdAssigned();
+    void onRecvFin();
+    //void on
 
     //node 변수 관련
     bool hasNodeId();

@@ -21,15 +21,22 @@ void MasterIdleState::run(Node& node){
     if (node.getNodeCount() == MAX_NODE_CNT) {
         node.startTimer();
         while(!node.timeout(2000)){}
+        for(int i = 0; i < 10; i++){
+            LoRa.beginPacket();
+            LoRa.write(MSG_FIN);                  // 1 byte
+            LoRa.endPacket();
+        }
         Serial.println("[MASTER] All node IDs assigned. Switching to RUNNING_AS_MASTER.");
         //다음 state로
+        
         return;
     }
 
     Serial.print("sending node: ");
     Serial.println(nextId);
     LoRa.beginPacket();
-    LoRa.print(nextId);
+    LoRa.write(MSG_ID_ASSIGN);                  // 1 byte
+    LoRa.write(nextId);     // payload
     LoRa.endPacket();
 
     LoRa.receive();
@@ -37,26 +44,25 @@ void MasterIdleState::run(Node& node){
     node.startTimer();
     while (!node.timeout(RESPONSE_TIMEOUT)) {
         int packetSize = LoRa.parsePacket();
-        if (packetSize) {
-            String incoming = "";
-            while (LoRa.available()) {
-                incoming += (char)LoRa.read();
-            }
+        if (packetSize >= 2) {
+            uint8_t type = LoRa.read();
+            if(type == MSG_ASSIGN_ACK){
+                uint8_t ackId;
+                ackId = LoRa.read();
 
-            Serial.print("[MASTER] Received: ");
-            Serial.println(incoming);
-
-            if (incoming.startsWith("ACK:")) {
-                int ackId = incoming.substring(4).toInt();
-                if (ackId == node.getNodeCount() + 1) {
-                    Serial.print("[MASTER] Node ");
-
-                    Serial.print(ackId);
-                    Serial.println(" confirmed. Assign next ID.");
+                if(ackId == nextId){
                     node.increaseNodeCount();
                     retry = 0;
+                    
+                    Serial.print("[MASTER] Node ");
+                    Serial.print(ackId);
+                    Serial.println(" confirmed. Assign next ID.");
                     return;
                 }
+            }
+            else{
+               while (LoRa.available()) LoRa.read();
+                continue;
             }
         }
     }

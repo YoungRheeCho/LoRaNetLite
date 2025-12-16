@@ -4,10 +4,10 @@
 #include "Node.h"
 #include "String"
 
-class JoinState : public NodeState {
+class JoinedState : public NodeState {
 public:
     // singleton
-    static JoinState& instance();
+    static JoinedState& instance();
 
     //const char* name() const override { return "GeneralIdle"; }
 
@@ -19,7 +19,7 @@ public:
 
 private:
     // 외부 생성/복사 금지
-    JoinState() = default;
-    JoinState(const JoinState&) = delete;
-    JoinState& operator=(const JoinState&) = delete;
+    JoinedState() = default;
+    JoinedState(const JoinedState&) = delete;
+    JoinedState& operator=(const JoinedState&) = delete;
 };
