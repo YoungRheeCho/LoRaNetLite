@@ -3,6 +3,7 @@
 #include "states/MasterIdleState.h"
 #include "states/JoinedState.h"
 #include "states/SlotAssignState.h"
+#include "states/ControlState.h"
 #include <Arduino.h>
 
 Node::Node()
@@ -16,6 +17,19 @@ void Node::init(){
     state->onEnter(*this);
 }
 
+void Node::clearRxBuffer(){
+    while (true) {
+        int packetSize = LoRa.parsePacket();
+        if (!packetSize) {
+            break;
+        }
+
+        while (LoRa.available()) {
+            LoRa.read();
+        }
+    }
+}
+
 void Node::changeState(NodeState& next){
     state->onExit(*this);
 
@@ -25,6 +39,10 @@ void Node::changeState(NodeState& next){
 
 void Node::onIdleTimeout(){
     changeState(MasterIdleState::instance());
+}
+
+void Node::onAllocateId(){
+    changeState(ControlState::instance());
 }
 
 void Node::onIdAssigned(){
@@ -53,8 +71,14 @@ void Node::setRole(Role role){
 
 void Node::setMaster(){
     nodeRole = Role::MASTER;
-    setNodeId(1);
-    node_count = 1;
+    if(!hasNodeId()){
+        setNodeId(1);
+    }
+    static MasterContext ctx;
+    masterCtx = &ctx;
+    ctx.controlPhase = ControlPhase::INIT;
+    ctx.nodeCount = 1;
+    memset(ctx.slot, 0x00, sizeof(ctx.slot));
 }
 
 Role Node::getRole(){
@@ -62,11 +86,35 @@ Role Node::getRole(){
 }
 
 void Node::increaseNodeCount(){
-    node_count++;
+    masterCtx->nodeCount++;
 }
 
 uint8_t Node::getNodeCount(){
-    return node_count;
+    return masterCtx->nodeCount;
+}
+
+void Node::setSlotCount(uint8_t count){
+    slotCount = count;
+}
+
+uint8_t Node::getSlotCount(){
+    return slotCount;
+}
+
+void Node::setControlPhase(ControlPhase p){
+    masterCtx->controlPhase = p;
+}
+
+ControlPhase Node::getControlPhase() const{
+    return masterCtx->controlPhase;
+}
+
+void Node::setSlot(int idx, uint8_t id){
+    masterCtx->slot[idx] = id;
+}
+
+uint8_t (&Node::getSlot())[8] {
+    return masterCtx->slot;   // ctrl.slot은 uint8_t[8]
 }
 
 void Node::startTimer() {

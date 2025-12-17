@@ -19,7 +19,11 @@ void JoinedState::run(Node& node) {
     uint8_t type = LoRa.read();
 
     if(type == MSG_FIN) {
-        Serial.println("FIN ARRIVED");
+        uint8_t slotCount = LoRa.read();
+        node.setSlotCount(slotCount);
+        Serial.print("FIN ARRIVED");
+        Serial.print("/Slot Count:");
+        Serial.println(node.getSlotCount());
         node.onRecvFin();
     }
 

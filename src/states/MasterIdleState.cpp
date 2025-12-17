@@ -24,10 +24,12 @@ void MasterIdleState::run(Node& node){
         for(int i = 0; i < 10; i++){
             LoRa.beginPacket();
             LoRa.write(MSG_FIN);                  // 1 byte
+            LoRa.write(8);//slot 갯수 hard coding
             LoRa.endPacket();
         }
         Serial.println("[MASTER] All node IDs assigned. Switching to RUNNING_AS_MASTER.");
-        //다음 state로
+        node.setSlotCount(8);
+        node.onAllocateId();
         
         return;
     }
