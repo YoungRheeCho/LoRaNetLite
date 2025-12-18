@@ -14,7 +14,7 @@
 #define MSG_CONTROL_RTMR 0X06
 #define MSG_CONTROL_DATA 0X07
 #define MSG_CONTROL_ALOC 0x08
-#define SLOT_LEN 50 //한 TIME SLOT의 길이(ms)
+#define SLOT_LEN 60 //한 TIME SLOT의 길이(ms)
 
 enum class Role : uint8_t {
     MASTER = 0,
@@ -24,9 +24,7 @@ enum class Role : uint8_t {
 enum class ControlPhase : uint8_t {
     INIT,
     RTMR,
-    DATA,
-    SEND,
-    RECV
+    DATA
 };
 
 struct MasterContext {
@@ -48,6 +46,7 @@ public:
     void onAllocateId();
     void onIdAssigned();
     void onRecvFin();
+    void onSlotAssigned(uint8_t CONTROL_NUM);
     //void on
 
     //node 변수 관련
@@ -56,6 +55,7 @@ public:
     uint8_t getNodeId();
     void setRole(Role role);
     void setMaster();
+    bool isMaster();
     Role getRole();
     void increaseNodeCount();
     uint8_t getNodeCount();
@@ -65,6 +65,10 @@ public:
     ControlPhase getControlPhase() const;
     void setSlot(int idx, uint8_t id);
     uint8_t (&getSlot())[8];
+    void setMySlot(uint8_t slotNum);
+    uint8_t getMySlot();
+    void setSendTurn(bool tf);
+    bool getSendTurn();
 
     //node timer
     void startTimer();
@@ -83,8 +87,7 @@ private:
     Role nodeRole;
     uint8_t mySlot;
     unsigned long timerStart;
-    //uint8_t node_count;
     uint8_t slotCount;
-    //ControlPhase controlPhase;
+    bool sendTurn;
     MasterContext* masterCtx = nullptr;
 };

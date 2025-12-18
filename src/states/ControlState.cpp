@@ -9,6 +9,9 @@ ControlState& ControlState::instance() {
 
 void ControlState::onEnter(Node& node) {
     node.clearRxBuffer();
+    node.setControlPhase(ControlPhase::INIT);
+    Serial.println("Control State");
+    node.startTimer();
 }
 
 void ControlState::onExit(Node& node){
@@ -35,84 +38,36 @@ void ControlState::sendData(Node& node){
     LoRa.endPacket();
 }
 
-void ControlState::sendMessage(Node& node){
-    LoRa.beginPacket();
-    LoRa.write(MSG_CONTROL_ALOC);
-    LoRa.write((uint8_t*)"Node1:CONTROLCONTROLCONTROLCONTROLCONTROLCONTROL", 48);
-    LoRa.endPacket();
-}
-
-void ControlState::recvSlotMsg(Node& node){
-    int packetSize = LoRa.parsePacket();
-    int cnt = 0; //buf index count
-    char buf[50];
-    if(!packetSize){
-        return;
-    }
-
-    uint8_t slotNum = node.elapsed()/SLOT_LEN;
-
-    uint8_t type = LoRa.read();
-    if(type != MSG_CONTROL_ALOC){
-        node.clearRxBuffer();
-        return;
-    }
-
-    while (LoRa.available() && cnt < packetSize - 1) {
-        buf[cnt] = (char)LoRa.read();
-        cnt++;
-    }
-    buf[cnt] = '\0';
-    Serial.println(buf);
-    if (memcmp(&buf[6], CONTROL_MSG, sizeof(CONTROL_MSG) - 1) == 0) {
-        if (buf[4] >= '0' && buf[4] <= '9') {
-            uint8_t id = buf[4] - '0';
-            node.setSlot(id, slotNum);
-        }
-    }
-}
-
 void ControlState::run(Node& node) {
     //node.startTimer();
     switch (node.getControlPhase()){
         case ControlPhase::INIT: //자기 id에 맞게 time slot에 메시지 보냄
-        node.startTimer();
-        sendInit(node);
-        while(!node.timeout(8)){} //guard 8ms
-        node.setControlPhase(ControlPhase::SEND);
-        break;
+            node.startTimer();
+            node.setMySlot(node.getNodeId());
+            sendInit(node);
+            Serial.print("Slot:");
+            for(int i = 0; i < 8; i++){
+                Serial.print(node.getSlot()[i]);
+            }
+            Serial.println();
+            //while(!node.timeout(8)){} //guard 8ms
+            node.onSlotAssigned(MSG_CONTROL_ALOC);
+            break;
 
-    case ControlPhase::RTMR: 
-        node.startTimer();
-        sendRtmr(node);
-        while(!node.timeout(8)){} //guard 8ms
-        node.setControlPhase(ControlPhase::SEND);
-        break;
+        case ControlPhase::RTMR: 
+            node.startTimer();
+            sendRtmr(node);
+            //while(!node.timeout(8)){} //guard 8ms
+            break;
 
-    case ControlPhase::DATA:
-        node.startTimer();
-        sendData(node);
-        while(!node.timeout(8)){} //guard 8ms
-        //node.setControlPhase(ControlPhase::SEND);
-        //다음 state로 넘어갈 것
-        break;
+        case ControlPhase::DATA:
+            node.startTimer();
+            sendData(node);
+            //while(!node.timeout(8)){} //guard 8ms
+            break;
 
-    case ControlPhase::SEND:
-        node.startTimer(); //timeslot의 시작점
-        sendMessage(node);
-        node.setControlPhase(ControlPhase::RECV);
-        LoRa.receive();
-        break;
-        
-    case ControlPhase::RECV:
-        recvSlotMsg(node);
-        if(node.elapsed() > SLOT_LEN * node.getSlotCount()){ //DATA 혹은 RTMR로 넘어가야 함.
-            node.setControlPhase(ControlPhase::DATA);
-        }
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
 
     // 남은 모든 바이트 플러시

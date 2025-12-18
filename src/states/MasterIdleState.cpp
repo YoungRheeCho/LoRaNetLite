@@ -12,7 +12,7 @@ void MasterIdleState::onEnter(Node& node){
 }
 
 void MasterIdleState::onExit(Node& node){
-
+    while(!node.timeout(2000)){}
 }
 
 void MasterIdleState::run(Node& node){

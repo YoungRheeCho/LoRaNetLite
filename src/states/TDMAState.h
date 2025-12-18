@@ -4,10 +4,10 @@
 #include "Node.h"
 #include "String"
 
-class ControlState : public NodeState {
+class TDMAState : public NodeState {
 public:
     // singleton
-    static ControlState& instance();
+    static TDMAState& instance();
 
     //const char* name() const override { return "GeneralIdle"; }
 
@@ -19,10 +19,8 @@ public:
 
 private:
     // 외부 생성/복사 금지
-    ControlState() = default;
-    ControlState(const ControlState&) = delete;
-    ControlState& operator=(const ControlState&) = delete;
-    void sendInit(Node& node);
-    void sendRtmr(Node& node);
-    void sendData(Node& node);
+    TDMAState() = default;
+    TDMAState(const TDMAState&) = delete;
+    TDMAState& operator=(const TDMAState&) = delete;
+    char controlMsg[50];
 };

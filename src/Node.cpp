@@ -4,6 +4,7 @@
 #include "states/JoinedState.h"
 #include "states/SlotAssignState.h"
 #include "states/ControlState.h"
+#include "states/TDMAState.h"
 #include <Arduino.h>
 
 Node::Node()
@@ -53,6 +54,10 @@ void Node::onRecvFin(){
     changeState(SlotAssignState::instance());
 }
 
+void Node::onSlotAssigned(uint8_t CONTROL_NUM){
+    changeState(TDMAState::instance());
+}
+
 bool Node::hasNodeId(){
     return getNodeId() != 0;
 }
@@ -79,6 +84,10 @@ void Node::setMaster(){
     ctx.controlPhase = ControlPhase::INIT;
     ctx.nodeCount = 1;
     memset(ctx.slot, 0x00, sizeof(ctx.slot));
+}
+
+bool Node::isMaster(){
+    return nodeRole == Role::MASTER;
 }
 
 Role Node::getRole(){
@@ -115,6 +124,22 @@ void Node::setSlot(int idx, uint8_t id){
 
 uint8_t (&Node::getSlot())[8] {
     return masterCtx->slot;   // ctrl.slot은 uint8_t[8]
+}
+
+void Node::setMySlot(uint8_t slotNum){
+    mySlot = slotNum;
+}
+
+uint8_t Node::getMySlot(){
+    return mySlot;
+}
+
+void Node::setSendTurn(bool tf){
+    sendTurn = tf;
+}
+
+bool Node::getSendTurn(){
+    return sendTurn;
 }
 
 void Node::startTimer() {
