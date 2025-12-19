@@ -22,7 +22,5 @@ private:
     ControlState() = default;
     ControlState(const ControlState&) = delete;
     ControlState& operator=(const ControlState&) = delete;
-    void sendInit(Node& node);
-    void sendRtmr(Node& node);
-    void sendData(Node& node);
+    void sendControl(Node& node);
 };

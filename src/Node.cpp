@@ -1,7 +1,7 @@
 #include "Node.h"
-#include "states/GeneralIdleState.h"
-#include "states/MasterIdleState.h"
-#include "states/JoinedState.h"
+//#include "states/GeneralIdleState.h"
+//#include "states/MasterIdleState.h"
+// #include "states/JoinedState.h"
 #include "states/SlotAssignState.h"
 #include "states/ControlState.h"
 #include "states/TDMAState.h"
@@ -14,7 +14,7 @@ Node::Node()
 
 //void Node::init(NodeState& initial){
 void Node::init(){
-    state = &GeneralIdleState::instance();
+    state = &SlotAssignState::instance();
     state->onEnter(*this);
 }
 
@@ -39,16 +39,17 @@ void Node::changeState(NodeState& next){
 }
 
 void Node::onIdleTimeout(){
-    changeState(MasterIdleState::instance());
+    //changeState(MasterIdleState::instance());
+    changeState(ControlState::instance());
 }
 
 void Node::onAllocateId(){
     changeState(ControlState::instance());
 }
 
-void Node::onIdAssigned(){
-    changeState(JoinedState::instance());
-}
+// void Node::onIdAssigned(){
+//     changeState(JoinedState::instance());
+// }
 
 void Node::onRecvFin(){
     changeState(SlotAssignState::instance());
@@ -76,17 +77,15 @@ void Node::setRole(Role role){
 
 void Node::setMaster(){
     nodeRole = Role::MASTER;
-    if(!hasNodeId()){
-        setNodeId(1);
-    }
     static MasterContext ctx;
     masterCtx = &ctx;
     ctx.controlPhase = ControlPhase::INIT;
     ctx.nodeCount = 1;
-    ctx.assignedSlotCount = 0;
-    ctx.allSlotsAssigned = false;
-    ctx.nextNodeId = 1;
     memset(ctx.slot, 0x00, sizeof(ctx.slot));
+    setMySlot(0);
+    //Serial.print("master id: ");
+    //Serial.println(getNodeId());
+    setSlot(0, getNodeId());
 }
 
 bool Node::isMaster(){
@@ -123,9 +122,9 @@ ControlPhase Node::getControlPhase() const{
 
 bool Node::setSlot(int idx, uint8_t id){
     if (!masterCtx) return false;
-    if (id < 1 || id > MAX_NODE_CNT) {
+    /*if (id < 1 || id > MAX_NODE_CNT) {
         return false;
-    }
+    }*/
     if (idx < 0 || idx >= 8) {
         return false;
     }

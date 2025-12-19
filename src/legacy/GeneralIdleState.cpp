@@ -13,12 +13,7 @@ void GeneralIdleState::onExit(Node& node){
     LoRa.receive();
 }
 
-void GeneralIdleState::run(Node& node) {
-    if (node.hasNodeId()) {
-        node.onIdAssigned();
-        return;
-    }
-    
+void GeneralIdleState::run(Node& node) { 
     // timeout시에 master가 됨
     if (node.timeout(5000)) {
         node.onIdleTimeout();

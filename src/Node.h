@@ -14,8 +14,9 @@
 #define MSG_CONTROL_RTMR 0X06
 #define MSG_CONTROL_DATA 0X07
 #define MSG_CONTROL_ALOC 0x08
-#define SLOT_LEN 60 //한 TIME SLOT의 길이(ms)
+#define SLOT_LEN 80 //한 TIME SLOT의 길이(ms)
 #define MAX_SLOT_CNT 8
+#define NODE_ID 1
 
 enum class Role : uint8_t {
     MASTER = 0,
