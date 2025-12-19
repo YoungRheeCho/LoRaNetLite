@@ -7,6 +7,8 @@ TDMAState& TDMAState::instance() {
 }
 
 void TDMAState::onEnter(Node& node) {
+    Serial.print("my slot: ");
+    Serial.println(node.getMySlot());
     TDMAheader = node.getNodeHeader();
     snprintf(controlMsg, sizeof(controlMsg), "Node%d:CONTROLCONTROLCONTROLCONTROLCONTROLCONTROL", node.getNodeId());
     LoRa.receive();
@@ -62,8 +64,13 @@ void TDMAState::run(Node& node) {
                 }
             }
             else{
+                Serial.print("payload: ");
                 Serial.println(payload);
             }
+        }
+        else{
+            Serial.print("payload: ");
+            Serial.println(payload);
         }
     }
 

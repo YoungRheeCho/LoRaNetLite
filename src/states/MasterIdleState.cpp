@@ -18,7 +18,7 @@ void MasterIdleState::onExit(Node& node){
 void MasterIdleState::run(Node& node){
     static int retry = 0;
     int nextId = node.getNodeCount() + 1;
-    if (node.getNodeCount() == MAX_NODE_CNT) {
+    if (node.getNextNodeId() == MAX_NODE_CNT) {
         node.startTimer();
         while(!node.timeout(2000)){}
         for(int i = 0; i < 10; i++){
@@ -54,6 +54,7 @@ void MasterIdleState::run(Node& node){
 
                 if(ackId == nextId){
                     node.increaseNodeCount();
+                    node.setNextNodeId(node.getNextNodeId() + 1);
                     retry = 0;
                     
                     Serial.print("[MASTER] Node ");
@@ -73,7 +74,8 @@ void MasterIdleState::run(Node& node){
     retry++;
     if (retry >= MAX_RETRY) {
         Serial.println("[MASTER] No ACK received. Moving to next ID anyway.");
-        node.increaseNodeCount();
+        //node.increaseNodeCount();
+        node.setNextNodeId(node.getNextNodeId() + 1);
         retry = 0;
     } else {
         Serial.println("[MASTER] No ACK, retrying...");

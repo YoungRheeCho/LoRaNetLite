@@ -85,6 +85,7 @@ void Node::setMaster(){
     ctx.nodeCount = 1;
     ctx.assignedSlotCount = 0;
     ctx.allSlotsAssigned = false;
+    ctx.nextNodeId = 1;
     memset(ctx.slot, 0x00, sizeof(ctx.slot));
 }
 
@@ -143,7 +144,7 @@ bool Node::setSlot(int idx, uint8_t id){
     increaseAssignedSlotCount();
     Serial.print("Assigned Slot count: ");
     Serial.println(getAssignedSlotCount());
-    setAllSlotAssigned(getAssignedSlotCount() == MAX_NODE_CNT);
+    setAllSlotAssigned(getAssignedSlotCount() == getNodeCount());
     return true;
 }
 
@@ -189,6 +190,12 @@ uint8_t Node::getNodeHeader(){
     return header;
 }
 
+void Node::setNextNodeId(uint8_t next){
+    masterCtx->nextNodeId = next;
+}
+uint8_t Node::getNextNodeId(){
+    return masterCtx->nextNodeId;
+}
 
 void Node::startTimer() {
     timerStart = millis();

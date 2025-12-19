@@ -5,7 +5,7 @@
 #include <Adafruit_GFX.h>
 #include "NodeState.h"
 
-#define MAX_NODE_CNT 3
+#define MAX_NODE_CNT 4
 #define MSG_ID_ASSIGN 0x01
 #define MSG_ASSIGN_ACK 0X02
 #define MSG_FIN 0X03
@@ -31,6 +31,7 @@ enum class ControlPhase : uint8_t {
 struct MasterContext {
     ControlPhase controlPhase;
     uint8_t nodeCount;
+    uint8_t nextNodeId;
     uint8_t slot[8];
     uint8_t assignedSlotCount;
     bool allSlotsAssigned;
@@ -78,6 +79,8 @@ public:
     bool ifAllSlotAssigned();
     void setNodeHeader(uint8_t hdr);
     uint8_t getNodeHeader();
+    void setNextNodeId(uint8_t next);
+    uint8_t getNextNodeId();
     //node timer
     void startTimer();
     unsigned long elapsed() const;
