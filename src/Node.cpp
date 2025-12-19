@@ -54,7 +54,7 @@ void Node::onRecvFin(){
     changeState(SlotAssignState::instance());
 }
 
-void Node::onSlotAssigned(uint8_t CONTROL_NUM){
+void Node::onSlotAssigned(){
     changeState(TDMAState::instance());
 }
 
@@ -83,6 +83,8 @@ void Node::setMaster(){
     masterCtx = &ctx;
     ctx.controlPhase = ControlPhase::INIT;
     ctx.nodeCount = 1;
+    ctx.assignedSlotCount = 0;
+    ctx.allSlotsAssigned = false;
     memset(ctx.slot, 0x00, sizeof(ctx.slot));
 }
 
@@ -118,8 +120,46 @@ ControlPhase Node::getControlPhase() const{
     return masterCtx->controlPhase;
 }
 
-void Node::setSlot(int idx, uint8_t id){
+bool Node::setSlot(int idx, uint8_t id){
+    if (!masterCtx) return false;
+    if (id < 1 || id > MAX_NODE_CNT) {
+        return false;
+    }
+    if (idx < 0 || idx >= 8) {
+        return false;
+    }
+
+    for(int i = 0; i < 8; i++){
+        if(masterCtx->slot[i] == id){
+            return false;
+        }
+    }
+
+    if(masterCtx->slot[idx] != 0x00){
+        return false;
+    }
+
     masterCtx->slot[idx] = id;
+    increaseAssignedSlotCount();
+    Serial.print("Assigned Slot count: ");
+    Serial.println(getAssignedSlotCount());
+    setAllSlotAssigned(getAssignedSlotCount() == MAX_NODE_CNT);
+    return true;
+}
+
+void Node::increaseAssignedSlotCount(){
+    masterCtx->assignedSlotCount++;
+}
+
+uint8_t Node::getAssignedSlotCount(){
+    return masterCtx->assignedSlotCount;
+}
+
+void Node::setAllSlotAssigned(bool tf){
+    masterCtx->allSlotsAssigned = tf;
+}
+bool Node::ifAllSlotAssigned(){
+    return masterCtx->allSlotsAssigned;
 }
 
 uint8_t (&Node::getSlot())[8] {
@@ -141,6 +181,14 @@ void Node::setSendTurn(bool tf){
 bool Node::getSendTurn(){
     return sendTurn;
 }
+
+void Node::setNodeHeader(uint8_t hdr){
+    header = hdr;
+}
+uint8_t Node::getNodeHeader(){
+    return header;
+}
+
 
 void Node::startTimer() {
     timerStart = millis();
